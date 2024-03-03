@@ -1,0 +1,126 @@
+#!bin/bash
+
+GIT_USER=ramonw
+GIT_MAIL=rajfwillems@gmail.com
+
+### install-dev-laptop  ###
+
+## Note: Do not use apt for scripting, but rather used the apt-get command:
+##       See man apt(8) for more details
+
+
+touch install-dev-laptop
+nano install-dev-laptop
+
+# Update repos and get latest versions of installed software
+sudo apt-get update && sudo apt upgrade
+
+# Some basic stuffs
+sudo apt-get install curl gpg gnupg2 software-properties-common ca-certificates apt-transport-https lsb-release  -y
+
+
+sudo apt-get install snap flatpak -y
+
+## KeepassXC 
+sudo snap install keepassxc
+
+# Make sure Yubikey works with KeepassXC
+sudo snap connect "keepassxc:raw-usb" "core:raw-usb"
+
+# Script to fix KeepassXC Browser plugin:
+wget https://raw.githubusercontent.com/keepassxreboot/keepassxc/latest/utils/keepassxc-snap-helper.sh -O ~/Downloads/keepass-snap-helper.sh
+chmod +x ~/Downloads/keepass-snap-helper.sh
+# This will give interactive menu. Scripting it will take some rewriting
+~/Downloads/keepass-snap-helper.sh
+
+sudo snap install discord
+sudo snap install brave chromium
+
+sudo apt install git
+git config --global user.name "$GIT_USER"
+git config --global user.email "$GIT_MAIL"
+git config --global init.defaultBranch main
+
+############# This is not nescessary anymore I think? @rajf? ################
+sudo snap isntall gh
+	gh repo clone kvalo/ath10k-firmware
+######################################################################
+
+## Fix Wifi for laptop (test if this works)
+## From: https://askubuntu.com/questions/1464433/i-installed-23-04-and-my-wifi-adapter-is-not-being-found-it-worked-yesterday-in
+## other possible solutions in that post
+sudo apt-get update && sudo apt-get install firmware-b43-installer
+
+# Install sublime & vscode
+sudo snap install sublime-text --classic
+sudo snap install code --classic
+
+## Jetbrains toolbox: 
+
+# Direct link: (might be possible to script this, but would need to check for latest version and generate recent link)
+# antiftw/server-bootstrap does something similar for the Roundcube installation
+# https://download.jetbrains.com/toolbox/jetbrains-toolbox-2.2.2.20062.tar.gz
+
+# For this version it would be
+
+wget https://download.jetbrains.com/toolbox/jetbrains-toolbox-2.2.2.20062.tar.gz -O ~/Downloads/jetbrains-toolbox.tar.gz
+tar -xvf ~/Downloads/jetbrains-toolbox.tar.gz
+
+# LibFuse (required for running toolbox)
+sudo apt-get install libfuse2
+
+# Run toolbox (will install it)
+~/Downloads/jetbrains-toolbox/jetbrains-toolbox
+
+## Docker
+
+# Get GPG Key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+# Add repository (requires enter press)
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# Install docker
+sudo apt-get install docker-ce -y
+# Add current user to docker group so we dont need sudo to run docker commands
+sudo usermod -aG docker $USER
+
+
+## NVM + NPM + NodeJS
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+nvm install --lts
+
+# Angular
+npm install -g @angular/clinpm install -g @angular/cli
+
+## PHP 8.3
+# No default install: see https://devtutorial.io/how-to-install-php-8-3-on-ubuntu-23-10-p3206.html
+# Note: the ondrej repo is required for 23.10, but most likely not for 24.04 since that will 
+# probably already Have php8.3 in the main repo
+
+# Add repo
+sudo add-apt-repository ppa:ondrej/php
+# Edit suite (mantic->jammy), since mantic does not have a release candidate, we use the one from jammy (22.04)
+sudo sed -i 's/mantic/jammy/g' /etc/apt/sources.list.d/ondrej-ubuntu-php-mantic.sources
+# Do the install
+sudo apt-get install php8.3 php8.3-cli php8.3-fpm -y
+
+# Change prefered package
+PHP_PREF_FILE=/etc/apt/preferences.d/ondrejphp
+touch "$PHP_PREF_FILE"
+echo "Package: libgd3" >> "$PHP_PREF_FILE"
+echo "Pin: release n=mantic" >> "$PHP_PREF_FILE"
+echo "Pin-Priority: 900" >> "$PHP_PREF_FILE"
+
+
+## Composer, we use the script provided at the website from composer:
+## https://getcomposer.org/doc/faqs/how-to-install-composer-programmatically.md
+## Read instructions there for more info 
+./install-composer
+
+## Install GIMP so we have something to handle image edits
+sudo apt-get install gimp -y
+
+## Browserplugins:
+# - https://addons.mozilla.org/en-US/firefox/addon/keepassxc-browser/
+# - https://addons.mozilla.org/en-US/firefox/addon/ublock-origin/
+# - https://addons.mozilla.org/en-US/firefox/addon/ninja-cookie/
